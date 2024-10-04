@@ -16,6 +16,18 @@ Requirements:
 
 To install the Python package dependencies, you can use `python -m pip install -r requirements.txt`. However, it is recommended to use a [virtual environment](https://docs.python.org/3/library/venv.html) to install the packages, see below ↓↓↓↓
 
+## Secrets Management
+
+Secrets (such as API keys) are either stored in [Secret Manager](https://console.cloud.google.com/security/secret-manager), or eliminated by authenticating with Google Application Credentials. On the Cloud Run deployments, the application is automatically authenticated using the `dayscape-backend` service ID. To run locally, you must [create a credential](https://console.cloud.google.com/apis/credentials) for this service ID and save it on your system.
+
+I recommend saving it in `.adc.json` since we have that file in the .gitignore to prevent accidental publishing. Note that if you DO accidentally commit this file, Google will detect it and disable that credential.
+
+Then export the following variable so the Google Cloud client libraries can use the key:
+
+```
+export GOOGLE_APPLICATION_CREDENTIALS=adc.json
+```
+
 ## Using Python Venv
 
 You can add the following alias to your .bashrc, or just enter the commands locally in your shell when you want to work on this application:
@@ -31,7 +43,7 @@ vactivate () {
 ## Running application
 
 ```
-gunicorn --bind :5556 --workers 1 --threads 8 --timeout 0 main:app
+gunicorn --bind :5556 --workers 1 --threads 8 --timeout 0 app:app
 ```
 
 ## Tests
