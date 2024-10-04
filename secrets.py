@@ -4,20 +4,17 @@ import os
 
 from config import environment, gcloud_project_id
 
-# ID of the secret to create.
-secret_id = "test-secret" + "-" + environment
-
 # Create the Secret Manager client.
 client = secretmanager.SecretManagerServiceClient()
 
-name = f"projects/{gcloud_project_id}/secrets/{secret_id}/versions/latest"
+def get_secret(name:str) -> str:
+    # ID of the secret to create.
+    secret_id = name + "-" + environment
 
-# Access the secret version
-response = client.access_secret_version(request={"name": name})
+    name = f"projects/{gcloud_project_id}/secrets/{secret_id}/versions/latest"
 
-# Decoding the secret payload
-payload = response.payload.data.decode("UTF-8")
+    # Access the secret version
+    response = client.access_secret_version(request={"name": name})
 
-# WARNING: Do not print the secret in a production environment - this
-# snippet is showing how to access the secret material.
-print(f"Plaintext: {payload}")
+    # Decoding the secret payload
+    return response.payload.data.decode("UTF-8")

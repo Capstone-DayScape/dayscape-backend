@@ -7,5 +7,5 @@ import secrets
 # Print out the test secret so we can verify it works in google cloud
 @app.route("/")
 def hello_world():
-    return secrets.payload
+    return "Hello, world!"
 
