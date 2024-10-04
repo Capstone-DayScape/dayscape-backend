@@ -6,7 +6,7 @@ Backend application for DayScape <- TODO: add link to frontend website when it's
 
 # Development
 
-This is a Python [Flask](https://flask.palletsprojects.com/) application that provides an API to be used by [dayscape-frontend](https://github.com/Capstone-DayScape/dayscape-frontend). 
+This is a Python [Flask](https://flask.palletsprojects.com/) application that provides an API to be used by [dayscape-frontend](https://github.com/Capstone-DayScape/dayscape-frontend).
 
 The application is deployed using Google Cloud Run, initially based on [this](https://github.com/GoogleCloudPlatform/python-docs-samples/tree/main/run/helloworld) boilerplate project from Google.
 
@@ -35,19 +35,17 @@ You can add the following alias to your .bashrc, or just enter the commands loca
 
 ```bash
 vactivate () {
-    python3.12 -m venv .venv
-    source .venv/bin/activate
+	python3.12 -m venv .venv
+	source .venv/bin/activate
 	python3.12 -m pip install -r requirements.txt
 }
 ```
 
-## Running application
+## Run the application
 
 ```
 gunicorn --bind :5556 --workers 1 --threads 8 --timeout 0 app:app
 ```
-
-NOTE: the :5556 port does matter for CORS (TODO: set up CORS)
 
 ## Tests
 
@@ -74,7 +72,7 @@ export BACKEND_URL=<url for the backend deployment you are testing>
 
 Run test:
 ```
-pytest tests/e2e.py 
+pytest tests/e2e.py
 ```
 
 # Container Development and Deployment
@@ -91,7 +89,5 @@ podman build . -t dayscape_backend:latest
 
 - Run the container:
 ```bash
-podman run -e PORT=5556 -e GOOGLE_APPLICATION_CREDENTIALS=adc.json -p 5556:5556 dayscape_backend:latest 
+podman run -e PORT=5556 -e GOOGLE_APPLICATION_CREDENTIALS=adc.json -p 5556:5556 dayscape_backend:latest
 ```
-
-## TODO: additional development documentation
