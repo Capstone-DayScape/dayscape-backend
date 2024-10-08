@@ -2,9 +2,11 @@ import os
 import requests
 import pytest
 
-backend_url = os.environ["BACKEND_URL"]
+from config import DEV_URL
 
-def test_hello_world_response():
-    response = requests.get(backend_url)
+backend_url = os.environ.get("BACKEND_URL", DEV_URL)
+
+def test_healthcheck():
+    response = requests.get(backend_url + "/api/healthcheck")
     assert response.status_code == 200, "Expected status code 200"
-    assert "Hello, world!" in response.text , "Response does not contain 'Hello World!"
+    assert "Healthcheck endpoint OK" in response.text , "Response does not contain 'Healthcheck endpoint OK"

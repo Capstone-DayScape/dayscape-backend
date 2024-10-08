@@ -8,7 +8,7 @@ Backend application for DayScape <- TODO: add link to frontend website when it's
 
 This is a Python [Flask](https://flask.palletsprojects.com/) application that provides an API to be used by [dayscape-frontend](https://github.com/Capstone-DayScape/dayscape-frontend).
 
-The application is deployed using Google Cloud Run, initially based on [this](https://github.com/GoogleCloudPlatform/python-docs-samples/tree/main/run/helloworld) boilerplate project from Google.
+The application is built automatically by Cloud Build and deployed under a static endpoint for each environment in Cloud Run. The Dockerfile describes the Cloud Build container, but you can directly run and edit the Python application for faster development.
 
 Requirements:
 - Service ID credential for `dayscape-backend`
@@ -18,7 +18,7 @@ Requirements:
 
 Secrets (such as API keys) are either stored in [Secret Manager](https://console.cloud.google.com/security/secret-manager), or eliminated by authenticating with directly to a Google Cloud API using application credentials. On the Cloud Run deployments, the application is automatically authenticated using the `dayscape-backend` service ID. To run locally, you must [create a credential](https://console.cloud.google.com/apis/credentials) for this service ID and save it on your system.
 
-I recommend saving it in `.adc.json` since we have that file in the .gitignore to prevent accidental publishing. Note that if you DO accidentally commit this file, Google will detect it and disable that credential.
+I recommend saving it in `./.adc.json`, which is in `.gitignore` to prevent accidental publishing. (Note that if you DO accidentally commit this file, Google will detect it and disable that credential.)
 
 Then export the following variable so the Google Cloud client libraries can use the key:
 
@@ -26,6 +26,10 @@ Then export the following variable so the Google Cloud client libraries can use 
 export GOOGLE_APPLICATION_CREDENTIALS=adc.json
 ```
 
+## Configuration
+Aside from the Google credentials ↑↑↑↑, all configuration is documented in [config.py](config.py). 
+
+**By default, the configuration assumes you are deploying to your workstation**. This is true for the backend and frontend. You should not need to set **any** configuration in *either* repository (aside from the Google credentials) for the backend to automatically serve its API to the frontend, which is running at http://localhost:3000.
 
 ## Using Python Venv
 
@@ -44,8 +48,15 @@ vactivate () {
 ## Run the application
 
 ```
-gunicorn --bind :5556 --workers 1 --threads 8 --timeout 0 app:app
+python app.py
 ```
+
+Or, to mimic exactly how we run multiple workers in the Cloud Run containers:
+```
+gunicorn --bind :5556 --workers 1 --threads 8 --timeout 0 app:APP
+```
+
+Then you can check that the API is working by vising http://0.0.0.0:5556/api/healthcheck
 
 ## Tests
 
@@ -64,15 +75,15 @@ For more info, [this](https://realpython.com/python-testing/) is a good introduc
 
 ## E2E Tests
 
-Set the backend url:
+By default, the E2E tests will run against the static dev endpoint in Google Cloud. You can optionally set the backend url (if you are running against your local deployment or another deployment somewhere):
 
 ```
-export BACKEND_URL=<url for the backend deployment you are testing>
+export BACKEND_URL=http://localhost:5556                # or http://0.0.0.0:5556 if you are testing the container
 ```
 
 Run test:
 ```
-pytest tests/e2e.py
+python -m pytest tests/e2e.py
 ```
 
 # Container Development and Deployment
@@ -89,5 +100,5 @@ podman build . -t dayscape_backend:latest
 
 - Run the container:
 ```bash
-podman run -e PORT=5556 -e GOOGLE_APPLICATION_CREDENTIALS=adc.json -p 5556:5556 dayscape_backend:latest
+podman run -e PORT=5556 -e GOOGLE_APPLICATION_CREDENTIALS=.adc.json -p 5556:5556 dayscape_backend:latest
 ```
