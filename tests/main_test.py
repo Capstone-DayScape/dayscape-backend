@@ -20,11 +20,11 @@ import app
 
 @pytest.fixture
 def client():
-    app.app.testing = True
-    return app.app.test_client()
+    app.APP.testing = True
+    return app.APP.test_client()
 
 def test_handler_no_env_variable(client):
-    r = client.get("/")
+    r = client.get("/api/healthcheck")
 
-    assert r.data.decode() == "Hello, world!"
+    assert "Healthcheck endpoint OK! You don't need to be authenticated to see this." in r.data.decode()
     assert r.status_code == 200

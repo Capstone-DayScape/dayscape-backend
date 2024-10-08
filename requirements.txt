@@ -1,4 +1,7 @@
-Flask==3.0.3
-gunicorn==22.0.0
-Werkzeug==3.0.3
+flask
+python-dotenv
+python-jose
+flask-cors
+six
+gunicorn
 google-cloud-secret-manager
