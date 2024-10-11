@@ -5,12 +5,15 @@ Prod: https://backend-prod-263849479020.us-central1.run.app
 
 Dev: https://backend-dev-263849479020.us-east1.run.app
 
-NOTE: You can create additional endpoints in [Cloud Run](https://console.cloud.google.com/run/) for testing, and you can also use the instructions in the README to deploy locally to your machine. You will need to modify the CORS/authentication settings so the deployment accepts your frontend instance.
+To develop against this backend, you should follow the instructions in the main README to run it on your workstation. The prod/dev frontend deployments are configured to use the actual endpoints above.
 
-# TODO: Authentication
-CORS settings will allow connections from the prod deployment of the frontend. 
+# Authentication
 
-Connections from any frontend deployments other than prod must be cryptographically authenticated  (or authenticated with CORS from a temporary backend deployment)
+Read the [Auth0 documentation](https://auth0.com/docs/quickstart/backend/python/02-using) first. There is also a more in-depth [document](https://auth0.com/docs/get-started/architecture-scenarios/spa-api) about our setup. To summarize, to authenticate with this API you must pass a valid access token. To get an access token, you must go through the Auth0 authorization flow by logging in from the Javascript application. The Auth0 Javascript SDK provides `getAccessTokenSilently()` to use anywhere after this login. Then you can pass the token in the headers to all requests to this API. 
 
-# TODO api/v1/whatever
-# TODO etc.
+CORS is already configured, so just be aware that if you run the frontend at a nonstandard endpoint (E.g. the netlify deploy previews, or http://localhost:1234), the API will reject your requests.
+
+In addition, you can obtain an access token for testing in the "Test" tab of the Auth0 settings for the API, which allows you to bypass the Auth0 login authorization.
+
+# api/private/maps_key
+Returns the Maps API Key for the frontend to use.
