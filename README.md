@@ -23,7 +23,7 @@ I recommend saving it in `./.adc.json`, which is in `.gitignore` to prevent acci
 Then export the following variable so the Google Cloud client libraries can use the key:
 
 ```
-export GOOGLE_APPLICATION_CREDENTIALS=adc.json
+export GOOGLE_APPLICATION_CREDENTIALS=.adc.json
 ```
 
 ## Configuration

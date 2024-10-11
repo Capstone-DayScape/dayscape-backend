@@ -6,7 +6,7 @@ from functools import wraps
 
 from flask import Flask, request, jsonify
 from flask.globals import request_ctx
-from flask_cors import cross_origin
+from flask_cors import cross_origin, CORS
 from jose import jwt
 
 from config import client_origin_url, auth0_audience, auth0_domain, port
@@ -14,11 +14,15 @@ from config import client_origin_url, auth0_audience, auth0_domain, port
 if not (client_origin_url and auth0_audience and auth0_domain):
     raise NameError("The required environment variables are missing. Check README and config.py.")
 
-# Flask code in this file is based on https://auth0.com/docs/quickstart/backend/python/01-authorization
+# Flask code in this file is originally based on
+# https://auth0.com/docs/quickstart/backend/python/01-authorization
 
 ALGORITHMS = ["RS256"]
 
+
 APP = Flask(__name__)
+
+cors = CORS(APP, resources={r"/api/*": {"origins": client_origin_url}})
 
 # Error handler
 class AuthError(Exception):
@@ -67,7 +71,7 @@ def requires_auth(f):
     @wraps(f)
     def decorated(*args, **kwargs):
         token = get_token_auth_header()
-        jsonurl = urlopen("https://"+AUTH0_DOMAIN+"/.well-known/jwks.json")
+        jsonurl = urlopen("https://"+auth0_domain+"/.well-known/jwks.json")
         jwks = json.loads(jsonurl.read())
         unverified_header = jwt.get_unverified_header(token)
         rsa_key = {}
@@ -87,7 +91,7 @@ def requires_auth(f):
                     rsa_key,
                     algorithms=ALGORITHMS,
                     audience=auth0_audience,
-                    issuer="https://"+AUTH0_DOMAIN+"/"
+                    issuer="https://"+auth0_domain+"/"
                 )
             except jwt.ExpiredSignatureError:
                 raise AuthError({"code": "token_expired",
@@ -103,7 +107,7 @@ def requires_auth(f):
                                     "Unable to parse authentication"
                                     " token."}, 401)
 
-            request_ctx.top.current_user = payload
+            request_ctx.current_user = payload
             return f(*args, **kwargs)
         raise AuthError({"code": "invalid_header",
                         "description": "Unable to find appropriate key"}, 401)
@@ -124,9 +128,6 @@ def requires_scope(required_scope):
                     return True
     return False
 
-
-# Controllers API
-
 # This doesn't need authentication
 @APP.route("/api/healthcheck")
 @cross_origin(headers=["Content-Type", "Authorization"])
@@ -136,11 +137,18 @@ def public():
 
 # This needs authentication
 @APP.route("/api/private")
-@cross_origin(headers=["Content-Type", "Authorization"])
 @requires_auth
 def private():
     response = "Hello from a private endpoint! You need to be authenticated to see this."
     return jsonify(message=response)
+
+# This needs authentication. It returns the Google Maps API key for
+# the frontend to use
+@APP.route("/api/private/maps_key")
+@requires_auth
+def maps_api_key():
+    key = google_secrets.get_secret("maps_api_key")
+    return jsonify(message=key)
 
 # This needs authorization (we probably won't use this)
 @APP.route("/api/private-scoped")
