@@ -32,7 +32,7 @@ allows you to bypass the Auth0 login authorization.
 - `api/public/` endpoints
 - `api/private/` endpoints (require account)
     - [api/private/maps_key](#apiprivatemaps_key)
-    - [api/private/save_trip](#apiprivatesave_tripuser_ididdatadataviewuserseditusers)
+    - [api/private/save_trip](#apiprivatesave_tripuser_ididviewuserseditusers)
     - [api/private/get_trip](#apiprivateget_tripuser_idid)
 
 ### `api/public/` endpoints
@@ -53,19 +53,18 @@ Parameters:
 
 Returns the Maps API Key for the frontend to use.
 
-#### `api/private/save_trip?user_id={id}&data={data}&view={users}&edit={users}`
+#### `api/private/save_trip?user_id={id}&view={users}&edit={users}`
 
 Method: **POST**
 
 Parameters:
 
 - `user_id`: The ID of the user's account to which the data will be saved.
-- `data`: The json structure (blob) being saved.
 - `view`: (Optional) The emails of the users who can access the trip to *view*.
 - `edit`: (Optional) The emails of the users who can access the trip to *edit*.
 
-Saves the trip data structure to the user's account in the database. The users specified for `edit` and `view` will have
-access to the trip.
+Saves the trip data structure to the user's account in the database. The emails specified for `edit` and `view` will have
+access to the trip. The trip itself should be sent through the _body_ of the request.
 
 #### `api/private/get_trip?user_id={id}`
 
@@ -75,5 +74,5 @@ Parameters:
 
 - `user_id`: The ID of the user's account to get trip data.
 
-Returns the json structure (blob) to be parsed/used. The `user_id` will be cross-referenced with _Auth0_ to check if the
-user's email has access to the trip.
+Returns the json structure to be parsed/used. The `user_id` will be cross-referenced with _Auth0_ to check if the
+user's _email_ has access to the trip.
