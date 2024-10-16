@@ -34,6 +34,7 @@ allows you to bypass the Auth0 login authorization.
     - [api/private/maps_key](#apiprivatemaps_key)
     - [api/private/save_trip](#apiprivatesave_tripuser_ididviewuserseditusers)
     - [api/private/get_trip](#apiprivateget_tripuser_idid)
+    - [api/private/preferences_to_types](#apiprivatepreferences_to_types)
 
 ### `api/public/` endpoints
 
@@ -53,26 +54,75 @@ Parameters:
 
 Returns the Maps API Key for the frontend to use.
 
-#### `api/private/save_trip?user_id={id}&view={users}&edit={users}`
+#### `api/private/save_trip?trip_id={id}&view={users}&edit={users}`
 
 Method: **POST**
 
 Parameters:
 
-- `user_id`: The ID of the user's account to which the data will be saved.
-- `view`: (Optional) The emails of the users who can access the trip to *view*.
-- `edit`: (Optional) The emails of the users who can access the trip to *edit*.
+- `trip_id`: (Optional) The unique trip ID. If left empty, a new trip
+  will be created in the database, with the authenticated user as the
+  owner.
+- `view`: (Optional) The emails of the users (besides owner) who can
+  access the trip to *view*.
+- `edit`: (Optional) The emails of the users (besides owner) who can
+  access the trip to *edit*.
 
-Saves the trip data structure to the user's account in the database. The emails specified for `edit` and `view` will have
-access to the trip. The trip itself should be sent through the _body_ of the request.
+Saves the trip data structure to the database as long as:
 
-#### `api/private/get_trip?user_id={id}`
+- the authenticated user has permissions to edit the trip
+- the permission changes are valid.
+
+The emails specified for `edit` and `view` will have access to the
+trip. The authenticated user will be marked as 'owner' of the trip if
+it's a new trip. Note that **owner** is an immutable field that is set
+by the backend on trip creation. The trip itself should be sent
+through the _body_ of the request.
+
+**Valid permission changes**:
+
+- Owner can add and remove editors and viewers
+- Editors can only add editors and viewers
+- Viewers cannot modify permissions
+
+#### `api/private/get_owned_trips_list` <!--  -->
+
+Method: **GET**
+
+Parameters: none
+
+Returns a list of trip IDs and names for trips owned by the authenticated user.
+
+#### `api/private/get_shared_trips_list`
+Method: **GET**
+
+Parameters: none
+
+Returns a list of trip IDs and names for trips that have been shared
+with the authenticated user (I.E, the authenticated user is _editor_
+or _viewer_ but not _owner_).
+
+#### `api/private/get_trip?trip_id={id}`
 
 Method: **GET**
 
 Parameters:
 
-- `user_id`: The ID of the user's account to get trip data.
+- `trip_id`: The ID of the trip.
 
-Returns the json structure to be parsed/used. The `user_id` will be cross-referenced with _Auth0_ to check if the
-user's _email_ has access to the trip.
+Returns the JSON trip structure if the authenticated user has
+permissions to view the trip.
+
+#### `api/private/preferences_to_types`
+
+Method: **POST**
+Parameters:
+- `input_list`: List of preference strings
+
+Returns a JSON list of [Google Places API
+"Types"](https://developers.google.com/maps/documentation/places/web-service/supported_types). The
+AI could hallucinate, so the output should be checked against a list
+of valid types.
+
+Mostly a demo method to test the LLM and explore deeper API
+integration from the frontend.

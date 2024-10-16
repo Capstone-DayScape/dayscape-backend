@@ -45,7 +45,9 @@ vactivate () {
 }
 ```
 
-```bash (windows)
+Windows:
+
+```bash
 vactivate () {
     python -m venv .venv
 	source .venv/Scripts/activate

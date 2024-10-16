@@ -150,57 +150,91 @@ def private():
     return jsonify(message=response)
 
 
-# This needs authentication. It returns the Google Maps API key for
-# the frontend to use
+# Returns the Google Maps API key for the frontend to use
 @APP.route("/api/private/maps_key")
 @requires_auth
 def maps_api_key():
     key = google_secrets.get_secret("maps_api_key")
     return jsonify(message=key)
 
-# WIP
-# This needs authentication. Saves the trip data to the user. If view or edit are available, those users will have
-# access to this trip data.
+# STUB
+# Saves the trip data to the database,
+# optionally modifying trip permissions. Creates a new trip if no
+# trip_id is supplied
 @APP.route("/api/private/save_trip", methods=["POST"])
 @requires_auth
 def save_trip():
-    user_id = request.args.get("user_id")
-    view_users = request.args.get("view")  # Since optional, will return null
-    edit_users = request.args.get("edit")  # Since optional, will return null
+    # If trip_id exists:
+    # - query database for trip
+    # - check that the authenticated user has edit permission or is owner
+    # - check that any permission changes are valid
+    # - save trip to database
 
-    if user_id is None:
-        return jsonify(message="Missing user_id!")
+    # Otherwise:
+    # - create new trip, set authenticated user as owner
 
-    request_body = request.json
+    # If trip to be saved is not valid, return error
+    response = "Trip saved:"
+    return response
 
-    # TODO: Remove (This is used to show params in return message)
-    parameters = jsonify(user_id=user_id, view_users=view_users, edit_users=edit_users)
+# STUB
+# Returns a list of trip IDs and names for
+# trips owned by the authenticated user.
+@APP.route("/api/private/get_owned_trips_list")
+@requires_auth
+def get_owned_trips_list():
 
-    # TODO: Save user_id, body, view, and edit to database
+    # TODO:
+    # - get Auth0 user
+    # - Query database for owned trips
 
-    # TODO: Replace with message (Success)
-    return jsonify(parameters=parameters.json, trip_data=request_body)
+    # list of trip IDs/names to be displayed on profile page
+    example_trips = {
+        "60f62fed-df59-4ad0-8e73-677e3fda5d9a": "Summer Family Beach Trip",
+        "1336c22f-b80c-4b39-9528-a2bfded82e29": "My mountain trip",
+        "936ba739-db01-45c8-ba46-38ec8acc21f7": "London 2026",
+        "51c28468-0930-4fcf-b8a7-3c2d58e9ac27": "Example trip name",
+    }
+    data = jsonify(example_trips)
+    return jsonify(data.json)
 
-# WIP
-# This needs authentication. Gets the trip data from the database and validates the user_id is of a user with
-# view/edit permissions
+# STUB
+# Returns a list of trip IDs and names for trips that have been shared
+# with the authenticated user
+@APP.route("/api/private/get_shared_trips_list")
+@requires_auth
+def get_shared_trips_list():
+    # TODO:
+    # - get Auth0 user
+    # - Query database for trips where user is viewer or editor (not owner)
+
+    # list of trip IDs/names to be displayed on profile page ("Shared with me")
+    example_trips = {
+        "60f62fed-df59-4ad0-8e73-677e3fda5d9a": "Shared Hiking Trip",
+        "1336c22f-b80c-4b39-9528-a2bfded82e29": "Corrie's Wedding Trip",
+        "936ba739-db01-45c8-ba46-38ec8acc21f7": "Night City 2077",
+        "51c28468-0930-4fcf-b8a7-3c2d58e9ac27": "Example shared trip name",
+    }
+    data = jsonify(example_trips)
+    return jsonify(data.json)
+
+    
+# STUB
+# Returns the JSON trip structure if the authenticated user has
+# permissions to view the trip.
 @APP.route("/api/private/get_trip")
 @requires_auth
 def get_trip():
-    user_id = request.args.get("user_id")
+    # - Query database for trip at the given trip_id
+    # - Check that the authenticated user has permissions to view or edit, or is the owner
+    # - return trip json
 
-    if user_id is None:
-        return jsonify(message="Missing user_id!")
+    example_trip = {
+        "name": "whatever",
+        "other_field": "whatever"}
 
-    # TODO: Check if user_id is the owner
-
-    # TODO: If not owner, then check if their email is listed in view/edit
-
-    # TODO: Replace with getting data from database
-    data = jsonify(user_id=user_id, sample="Some text")
-
-    # TODO: Return data
-    return jsonify(message="Successfully received data!", trip_data=data.json, permission="View")
+    data = jsonify(example_trip)
+    return jsonify(data.json)
 
 from llm import match_to_places_api_types
 # This needs authentication. It returns a list of google map "types"
