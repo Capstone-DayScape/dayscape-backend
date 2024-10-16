@@ -158,7 +158,7 @@ def maps_api_key():
     key = google_secrets.get_secret("maps_api_key")
     return jsonify(message=key)
 
-
+# WIP
 # This needs authentication. Saves the trip data to the user. If view or edit are available, those users will have
 # access to this trip data.
 @APP.route("/api/private/save_trip", methods=["POST"])
@@ -181,7 +181,7 @@ def save_trip():
     # TODO: Replace with message (Success)
     return jsonify(parameters=parameters.json, trip_data=request_body)
 
-
+# WIP
 # This needs authentication. Gets the trip data from the database and validates the user_id is of a user with
 # view/edit permissions
 @APP.route("/api/private/get_trip")
@@ -201,6 +201,19 @@ def get_trip():
 
     # TODO: Return data
     return jsonify(message="Successfully received data!", trip_data=data.json, permission="View")
+
+from llm import match_to_places_api_types
+# This needs authentication. It returns a list of google map "types"
+# based on the preference tag argument (using gpt4o-mini). Could be
+# hardcoded in a map in the frontend but this gives us a way to demo
+# the LLM
+@APP.route("/api/private/preferences_to_types", methods=['POST'])
+@requires_auth
+def preferences_to_types():
+    data = request.json
+    input_list = data.get('input_list', [])
+    matched_list = match_to_places_api_types(input_list)
+    return jsonify({'matched_list': matched_list.types})
 
 
 # This needs authorization (we probably won't use this)
