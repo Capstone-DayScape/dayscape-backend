@@ -1,6 +1,6 @@
 # DayScape backend
 
-Backend application for DayScape <- TODO: add link to frontend website when it's up
+Backend application for DayScape ([dev frontend deployment](https://dayscape-dev.netlify.app/))
 
 [API Documentation](API.md)
 
