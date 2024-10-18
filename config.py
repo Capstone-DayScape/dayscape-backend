@@ -22,6 +22,12 @@ DEV_URL = "https://backend-dev-263849479020.us-east1.run.app"
 environment = os.environ.get("DAYSCAPE_ENVIRONMENT", "dev")
 auth0_audience = os.environ.get("AUTH0_AUDIENCE", DEV_URL if environment == "dev" else PROD_URL)
 
+# Database connection string; prod and dev databases are both in the
+# same pg instance called dayscape-dev
+db_connector = "moonlit-mesh-437320-t8:us-east1:dayscape-dev"
+# Database name
+db_name = "dayscape-dev-db" if environment == "dev" else "dayscape-prod-db"
+
 # Deployments on Cloud Run must change the following variables to
 # match the corresponding frontend deployment URL
 client_origin_url = os.environ.get("CLIENT_ORIGIN_URL", "http://localhost:3000")
