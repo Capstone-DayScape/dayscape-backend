@@ -83,11 +83,7 @@ it's a new trip. Note that **owner** is an immutable field that is set
 by the backend on trip creation. The trip itself should be sent
 through the _body_ of the request.
 
-**Valid permission changes**:
-
-- Owner can add and remove editors and viewers
-- Editors can only add editors and viewers
-- Viewers cannot modify permissions
+**Valid permission changes**: only the _owner_ can add and remove editors and viewers
 
 #### `api/private/get_owned_trips_list` <!--  -->
 
