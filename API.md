@@ -9,6 +9,10 @@ Dev: https://backend-dev-263849479020.us-east1.run.app
 To develop against this backend, you should follow the instructions in the main README to run it on your workstation.
 The prod/dev frontend deployments are configured to use the actual endpoints above.
 
+Frontend URLS:
+- [prod](https://dayscape.netlify.app/) 
+- [dev](https://dayscape-dev.netlify.app/)
+
 ## Authentication
 
 Read the [Auth0 documentation](https://auth0.com/docs/quickstart/backend/python/02-using) first. There is also a more

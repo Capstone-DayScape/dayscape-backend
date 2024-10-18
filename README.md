@@ -1,8 +1,9 @@
 # DayScape backend
 
-Backend application for DayScape ([dev frontend deployment](https://dayscape-dev.netlify.app/))
+Backend application for [DayScape](https://dayscape.netlify.app/).
 
-[API Documentation](API.md)
+- [Frontend repository](https://github.com/Capstone-DayScape/dayscape-frontend)
+- [API Documentation](API.md)
 
 # Development
 
