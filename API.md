@@ -73,7 +73,7 @@ Parameters:
 
 Returns the Maps API Key for the frontend to use.
 
-#### `api/private/save_trip?trip_id={id}&view={users}&edit={users}`
+#### `api/private/save_trip?trip_id={id}&trip_name={name}&view={users}&edit={users}`
 
 Method: **POST**
 
@@ -82,6 +82,8 @@ Parameters:
 - `trip_id`: (Optional) The unique and valid trip ID. If left empty, a
   new trip will be created in the database, with the authenticated
   user as the owner.
+- `trip_name`: (Optional) Trip name. If left empty, the old name will
+  be kept
 - `view`: (Optional) The emails of the users (besides owner) who can
   access the trip to *view*.
 - `edit`: (Optional) The emails of the users (besides owner) who can

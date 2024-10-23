@@ -88,8 +88,9 @@ def db_save_trip(authenticated_user, trip_id=None, trip_data=None, view=None, ed
         if not trip and trip_id:
           raise PermissionError("Invalid trip ID")
 
-        # Owner can update editors and viewers
+        # Owner can update name, editors, and viewers
         if trip.owner == authenticated_user:
+            trip.name = trip_name if trip_name is not None else trip.name
             trip.viewers = view if view is not None else trip.viewers
             trip.editors = edit if edit is not None else trip.editors
             trip.trip_data = trip_data if trip_data is not None else trip.trip_data
