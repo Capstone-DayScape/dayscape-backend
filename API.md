@@ -79,9 +79,9 @@ Method: **POST**
 
 Parameters:
 
-- `trip_id`: (Optional) The unique trip ID. If left empty, a new trip
-  will be created in the database, with the authenticated user as the
-  owner.
+- `trip_id`: (Optional) The unique and valid trip ID. If left empty, a
+  new trip will be created in the database, with the authenticated
+  user as the owner.
 - `view`: (Optional) The emails of the users (besides owner) who can
   access the trip to *view*.
 - `edit`: (Optional) The emails of the users (besides owner) who can
@@ -119,7 +119,7 @@ or _viewer_ but not _owner_).
 
 #### `api/private/get_trip?trip_id={id}`
 
-Method: **GET**
+Method: **POST**
 
 Parameters:
 

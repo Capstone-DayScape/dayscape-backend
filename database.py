@@ -56,6 +56,78 @@ class Preference(Base):
     email = Column(String(255), nullable=False, primary_key=True)
     preferences_data = Column(JSON)
 
+def db_save_trip(authenticated_user, trip_id=None, trip_data=None, view=None, edit=None, ):
+    """
+    Saves the trip data structure to the database.
+    Parameters:
+    - authenticated_user: The email of the authenticated user.
+    - trip_id: (Optional) The unique and valid trip ID.
+    - view: (Optional) New list of emails of users (besides the owner) who can access the trip to *view*.
+    - edit: (Optional) New list of emails of users (besides the owner) who can access the trip to *edit*.
+    - trip_data: (Optional) The data structure representing the trip.
+
+    The authenticated_user will be marked as 'owner' of the trip if it's a new trip.
+    """
+
+    with session_scope() as session:
+        trip = None
+        if trip_id:
+            trip = session.query(Trip).filter_by(id=trip_id).one_or_none()
+
+        # Validate permissions
+        if trip:
+            # Check if authenticated user is allowed to edit
+            if (trip.owner != authenticated_user and authenticated_user not in trip.editors):
+                raise PermissionError("Authenticated user does not have permission to edit this trip.")
+
+        # If no trip is found and we don't have a trip_id, create a new one
+        if not trip and not trip_id:
+            trip = Trip(owner=authenticated_user)
+
+        # frontend cannot choose the trip id
+        if not trip and trip_id:
+          raise PermissionError("Invalid trip ID")
+
+        # Owner can update editors and viewers
+        if trip.owner == authenticated_user:
+            trip.viewers = view if view is not None else trip.viewers
+            trip.editors = edit if edit is not None else trip.editors
+            trip.trip_data = trip_data if trip_data is not None else trip.trip_data
+
+        # editor can only change the trip data, not the permissions
+        if authenticated_user in trip.editors:
+          trip.trip_data = trip_data
+
+        session.add(trip)
+
+def db_get_trip(authenticated_user, trip_id):
+    """
+    Retrieves the trip data structure from the database.
+
+    Parameters:
+    - authenticated_user: The email of the authenticated user.
+    - trip_id: The ID of the trip.
+
+    Returns:
+    - The JSON trip structure if the authenticated user has permissions to view the trip.
+    """
+
+    with session_scope() as session:
+        trip = session.query(Trip).filter_by(id=trip_id).one_or_none()
+
+        # check permissions
+        if trip:
+            if (
+                trip.owner == authenticated_user or
+                authenticated_user in trip.editors or
+                authenticated_user in trip.viewers
+            ):
+                return trip.trip_data
+            else:
+                raise PermissionError("Authenticated user does not have permission to view this trip.")
+        else:
+            raise ValueError("Trip not found.")
+
 def db_save_preferences(user, data):
   with session_scope() as session:
     preference = session.query(Preference).filter_by(email=user).one_or_none()
