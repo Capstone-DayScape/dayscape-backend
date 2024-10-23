@@ -2,7 +2,7 @@
 # it means the user's email as a string.
 
 from sqlalchemy import create_engine, Column, String, Text, JSON, ARRAY, func
-from sqlalchemy.dialects.postgresql import UUID
+from sqlalchemy.dialects.postgresql import UUID, ARRAY
 from sqlalchemy.orm import sessionmaker, declarative_base
 from contextlib import contextmanager
 import requests
@@ -56,7 +56,39 @@ class Preference(Base):
     email = Column(String(255), nullable=False, primary_key=True)
     preferences_data = Column(JSON)
 
-def db_save_trip(authenticated_user, trip_id=None, trip_data=None, view=None, edit=None, ):
+def db_get_shared_trips(authenticated_user):
+    """
+    Retrieves a list of trip IDs and names for trips where the authenticated user
+    is a viewer or an editor.
+
+    Returns:
+    - A list of tuples (trip_id, trip_name).
+    """
+    with session_scope() as session:
+        trips = (
+            session.query(Trip.id, Trip.name)
+            .filter(
+                (Trip.viewers.contains([authenticated_user])) |
+                (Trip.editors.contains([authenticated_user]))
+            )
+            .all())
+        return trips
+
+def db_get_owned_trips(authenticated_user):
+    """
+    Retrieves a list of trip IDs and names for trips owned by the authenticated user.
+
+    Returns:
+    - A list of tuples (trip_id, trip_name).
+    """
+    with session_scope() as session:
+        trips = (
+            session.query(Trip.id, Trip.name)
+            .filter(Trip.owner == authenticated_user)
+            .all())
+        return trips
+
+def db_save_trip(authenticated_user, trip_id=None,trip_name=None, trip_data=None, view=None, edit=None, ):
     """
     Saves the trip data structure to the database.
     Parameters:

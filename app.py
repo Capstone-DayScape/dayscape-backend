@@ -162,26 +162,16 @@ def maps_api_key():
     key = google_secrets.get_secret("maps_api_key")
     return jsonify(message=key)
 
-# STUB
 # Returns a list of trip IDs and names for
 # trips owned by the authenticated user.
 @APP.route("/api/private/get_owned_trips_list")
 @requires_auth
 def get_owned_trips_list():
-
-    # TODO:
-    # - get Auth0 user
-    # - Query database for owned trips
-
-    # list of trip IDs/names to be displayed on profile page
-    example_trips = {
-        "60f62fed-df59-4ad0-8e73-677e3fda5d9a": "Summer Family Beach Trip",
-        "1336c22f-b80c-4b39-9528-a2bfded82e29": "My mountain trip",
-        "936ba739-db01-45c8-ba46-38ec8acc21f7": "London 2026",
-        "51c28468-0930-4fcf-b8a7-3c2d58e9ac27": "Example trip name",
-    }
-    data = jsonify(example_trips)
-    return jsonify(data.json)
+    email = request_ctx.user_info.get("email")
+    trips = database.db_get_owned_trips(email)
+    objects = [{"uuid": str(uuid), "name": name if name is not None else ""} for uuid, name in trips]
+    data = jsonify(objects)
+    return data.json
 
 # STUB
 # Returns a list of trip IDs and names for trips that have been shared
@@ -189,19 +179,11 @@ def get_owned_trips_list():
 @APP.route("/api/private/get_shared_trips_list")
 @requires_auth
 def get_shared_trips_list():
-    # TODO:
-    # - get Auth0 user
-    # - Query database for trips where user is viewer or editor (not owner)
-
-    # list of trip IDs/names to be displayed on profile page ("Shared with me")
-    example_trips = {
-        "60f62fed-df59-4ad0-8e73-677e3fda5d9a": "Shared Hiking Trip",
-        "1336c22f-b80c-4b39-9528-a2bfded82e29": "Corrie's Wedding Trip",
-        "936ba739-db01-45c8-ba46-38ec8acc21f7": "Night City 2077",
-        "51c28468-0930-4fcf-b8a7-3c2d58e9ac27": "Example shared trip name",
-    }
-    data = jsonify(example_trips)
-    return jsonify(data.json)
+    email = request_ctx.user_info.get("email")
+    trips = database.db_get_shared_trips(email)
+    objects = [{"uuid": str(uuid), "name": name if name is not None else ""} for uuid, name in trips]
+    data = jsonify(objects)
+    return data.json
 
 from llm import match_to_places_api_types
 # Returns a list of google map "types" based on the preference tag
