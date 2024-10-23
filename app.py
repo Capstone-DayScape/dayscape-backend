@@ -9,6 +9,9 @@ from flask.globals import request_ctx
 from flask_cors import cross_origin, CORS
 from jose import jwt
 
+import database
+import requests
+
 from config import client_origin_url, auth0_audience, auth0_domain, port
 
 if not (client_origin_url and auth0_audience and auth0_domain):
@@ -22,7 +25,6 @@ ALGORITHMS = ["RS256"]
 APP = Flask(__name__)
 
 cors = CORS(APP, resources={r"/api/*": {"origins": client_origin_url}})
-
 
 # Error handler
 class AuthError(Exception):
@@ -112,6 +114,9 @@ def requires_auth(f):
                                      " token."}, 401)
 
             request_ctx.current_user = payload
+            # Also get the user info
+            request_ctx.user_info = call_userinfo_endpoint(token)
+
             return f(*args, **kwargs)
         raise AuthError({"code": "invalid_header",
                          "description": "Unable to find appropriate key"}, 401)
@@ -218,7 +223,6 @@ def get_shared_trips_list():
     data = jsonify(example_trips)
     return jsonify(data.json)
 
-    
 # STUB
 # Returns the JSON trip structure if the authenticated user has
 # permissions to view the trip.
@@ -237,32 +241,42 @@ def get_trip():
     return jsonify(data.json)
 
 from llm import match_to_places_api_types
-# This needs authentication. It returns a list of google map "types"
-# based on the preference tag argument (using gpt4o-mini). Could be
-# hardcoded in a map in the frontend but this gives us a way to demo
-# the LLM
-@APP.route("/api/private/preferences_to_types", methods=['POST'])
-@requires_auth
+# Returns a list of google map "types" based on the preference tag
+# argument (using gpt4o-mini). Could be hardcoded in a map in the
+# frontend but this gives us a way to demo the LLM
+@APP.route("/api/public/preferences_to_types", methods=['POST'])
 def preferences_to_types():
     data = request.json
     input_list = data.get('input_list', [])
     matched_list = match_to_places_api_types(input_list)
     return jsonify({'matched_list': matched_list.types})
 
+def call_userinfo_endpoint(token):
+    url = f"https://{auth0_domain}/userinfo"
+    headers = {
+        "Authorization": f"Bearer {token}"
+    }
+    response = requests.get(url, headers=headers)
+    if response.status_code != 200:
+        raise AuthError({"code": "userinfo_request_failed", "description": "Failed to fetch user info"}, response.status_code)
+    return response.json()
 
-# This needs authorization (we probably won't use this)
-@APP.route("/api/private-scoped")
-@cross_origin(headers=["Content-Type", "Authorization"])
+# Returns the JSON preferences stored in the db for the authenticated user.
+@APP.route("/api/private/get_preferences")
 @requires_auth
-def private_scoped():
-    if requires_scope("read:messages"):
-        response = "Hello from a private endpoint! You need to be authenticated and have a scope of read:messages to see this."
-        return jsonify(message=response)
-    raise AuthError({
-        "code": "Unauthorized",
-        "description": "You don't have access to this resource"
-    }, 403)
+def get_preferences():
+    email = request_ctx.user_info.get("email")
+    data = jsonify(database.db_get_preferences(email))
+    return (data.json)
 
+# saves the JSON body of the request as user preferences in the db
+@APP.route("/api/private/save_preferences", methods=['POST'])
+@requires_auth
+def save_preferences():
+    email = request_ctx.user_info.get("email")
+    data = request.json
+    database.db_save_preferences(email, data)
+    return "saved preferences"
 
 if __name__ == '__main__':
     APP.run(host="0.0.0.0", port=port, debug=True)

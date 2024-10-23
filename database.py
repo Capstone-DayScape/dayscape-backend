@@ -1,33 +1,46 @@
-from google.cloud.sql.connector import Connector, IPTypes
+# Direct code to connect to database. Anywhere 'user' is a parameter,
+# it means the user's email as a string.
+
 from sqlalchemy import create_engine, Column, String, Text, JSON, ARRAY, func
 from sqlalchemy.dialects.postgresql import UUID
-from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import sessionmaker
+from sqlalchemy.orm import sessionmaker, declarative_base
+from contextlib import contextmanager
 import requests
 import uuid
 
 from config import db_connector, db_name, environment
 
-connector = None
-db = None
+from google_secrets import get_secret
 
-def init_pool(connector):
-  def getconn():
-      connection = connector.connect(db_connector,
-      "pg8000",
-      user="dayscape-backend@moonlit-mesh-437320-t8.iam.gserviceaccount.com",
-      db=db_name,                                   
-      enable_iam_auth=True,
-      ip_type=IPTypes.PUBLIC,
-    )
-      return connection
+db_ip = get_secret("db_ip")
+db_password = get_secret("db_password")
+db_user = "dayscape"
 
-  # create connection pool
-  engine = create_engine("postgresql+pg8000://", creator=getconn)
-  return engine
+db_url = f'postgresql://{db_user}:{db_password}@{db_ip}/{db_name}'
 
+# SQLAlchemy setup code
+# Create an engine
+engine = create_engine(db_url)
 # Sqlalchemy ORM ( https://en.wikipedia.org/wiki/Object%E2%80%93relational_mapping )
 Base = declarative_base()
+# Bind the engine to the Base class to start using it
+Base.metadata.bind = engine
+# https://docs.sqlalchemy.org/en/20/orm/session_basics.html
+Session = sessionmaker(bind=engine)
+
+@contextmanager
+def session_scope():
+# variable to hold session. In SQLAlchemy, the session keeps track of
+# all changes, acts as a staging area for pending changes to objects.
+  session = Session()
+  try:
+    yield session
+    session.commit()
+  except Exception as e:
+    session.rollback()
+    raise
+  finally:
+    session.close()
 
 class Trip(Base):
     __tablename__ = 'trip'
@@ -42,44 +55,21 @@ class Preference(Base):
     __tablename__ = 'preference'
     email = Column(String(255), nullable=False, primary_key=True)
     preferences_data = Column(JSON)
-    
-def hello_world():
-  global connector, db
-  if not db:
-    connector = Connector()
-    db = init_pool(connector)
 
-  Session = sessionmaker(bind=db)
-  session = Session()
+def db_save_preferences(user, data):
+  with session_scope() as session:
+    preference = session.query(Preference).filter_by(email=user).one_or_none()
+    if preference is None:
+      preference = Preference(email=user, preferences_data=data)
+      session.add(preference)
+    else:
+      preference.preferences_data = data
 
-  # example trip
-  new_trip = Trip(
-       owner='example@example.com',
-       name='My Trip',
-       viewers=['viewer1@example.com', 'viewer2@example.com'],
-       editors=['editor1@example.com'],
-       trip_data={"destination": "Wonderland", "duration": 7}
-   )
-
-  # Example preference. NOTE: this part will fail if you don't change
-  # the email because of the email primary key, we need code to update
-  # preferences after creating them for a user
-  new_preference = Preference(
-      email = "example@example.com",
-      preferences_data = ["family fun", "public transportation"]
-  )
-
-  try:
-      session.add(new_trip)
-      session.add(new_preference)
-      session.commit()
-      print("Trip added successfully.")
-      # print("Preference added successfully.")
-  except Exception as e:
-      session.rollback()
-      print(f"Error adding trip: {e}")
-  finally:
-      session.close()
-
-if __name__ == '__main__':
-    hello_world()
+def db_get_preferences(user):
+  with session_scope() as session:
+    # Query the preference table using the user's email
+    preference = session.query(Preference).filter_by(email=user).one_or_none()
+    if preference is not None:
+        return preference.preferences_data
+    else:
+        return None

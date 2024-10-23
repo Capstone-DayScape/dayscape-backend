@@ -48,6 +48,21 @@ These endpoints will be used by anyone **without** an account.
 
 These endpoints will be used by anyone **with** an account.
 
+#### `api/public/preferences_to_types`
+
+Method: **POST**
+Parameters:
+- `input_list`: List of preference strings
+
+Returns a JSON list of [Google Places API
+"Types"](https://developers.google.com/maps/documentation/places/web-service/supported_types). The
+AI could hallucinate, so the output should be checked against a list
+of valid types.
+
+Mostly a demo method to test the LLM and explore deeper API
+integration from the frontend.
+
+
 #### `api/private/maps_key`
 
 Method: **GET**
@@ -113,16 +128,21 @@ Parameters:
 Returns the JSON trip structure if the authenticated user has
 permissions to view the trip.
 
-#### `api/private/preferences_to_types`
+#### `api/private/get_preferences`
+
+Method: **GET**
+
+Parameters: none
+
+Returns the JSON preferences stored in the db for the authenticated user.
+
+#### `api/private/save_preferences`
 
 Method: **POST**
-Parameters:
-- `input_list`: List of preference strings
 
-Returns a JSON list of [Google Places API
-"Types"](https://developers.google.com/maps/documentation/places/web-service/supported_types). The
-AI could hallucinate, so the output should be checked against a list
-of valid types.
+Parameters: none
 
-Mostly a demo method to test the LLM and explore deeper API
-integration from the frontend.
+Updates the JSON preferences stored in the db for the authenticated
+user from the body of the request. The entire json body of the request
+will be stored.
+
