@@ -6,6 +6,5 @@ six
 gunicorn
 google-cloud-secret-manager
 openai
-cloud-sql-python-connector[asyncpg]
 sqlalchemy
-pg8000
+psycopg2
