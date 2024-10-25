@@ -13,6 +13,8 @@ Frontend URLS:
 - [prod](https://dayscape.netlify.app/) 
 - [dev](https://dayscape-dev.netlify.app/)
 
+Furthermore, good usage documentation is in `src/tests/api_tests.js` in the frontend repository.
+
 ## Authentication
 
 Read the [Auth0 documentation](https://auth0.com/docs/quickstart/backend/python/02-using) first. There is also a more

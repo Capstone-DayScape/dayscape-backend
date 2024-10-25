@@ -44,7 +44,7 @@ def session_scope():
 
 class Trip(Base):
     __tablename__ = 'trip'
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    id = Column(UUID(as_uuid=True), primary_key=True)
     owner = Column(String(255), nullable=False)
     name = Column(Text)
     viewers = Column(ARRAY(Text), default=[])
@@ -106,32 +106,36 @@ def db_save_trip(authenticated_user, trip_id=None,trip_name=None, trip_data=None
         if trip_id:
             trip = session.query(Trip).filter_by(id=trip_id).one_or_none()
 
-        # Validate permissions
         if trip:
             # Check if authenticated user is allowed to edit
             if (trip.owner != authenticated_user and authenticated_user not in trip.editors):
                 raise PermissionError("Authenticated user does not have permission to edit this trip.")
 
-        # If no trip is found and we don't have a trip_id, create a new one
-        if not trip and not trip_id:
-            trip = Trip(owner=authenticated_user)
+            # Owner can update name, editors, and viewers
+            if trip.owner == authenticated_user:
+              trip.name = trip_name if trip_name is not None else trip.name
+              trip.viewers = view if view is not None else trip.viewers
+              trip.editors = edit if edit is not None else trip.editors
+
+              # editor and owner can both change trip_data
+              trip.trip_data = trip_data if trip_data is not None else trip.trip_data
 
         # frontend cannot choose the trip id
         if not trip and trip_id:
           raise PermissionError("Invalid trip ID")
 
-        # Owner can update name, editors, and viewers
-        if trip.owner == authenticated_user:
-            trip.name = trip_name if trip_name is not None else trip.name
-            trip.viewers = view if view is not None else trip.viewers
-            trip.editors = edit if edit is not None else trip.editors
-            trip.trip_data = trip_data if trip_data is not None else trip.trip_data
-
-        # editor can only change the trip data, not the permissions
-        if authenticated_user in trip.editors:
-          trip.trip_data = trip_data
+        # If no trip is found and we don't have a trip_id, create a
+        # new one
+        if not trip and not trip_id:
+            trip = Trip(owner=authenticated_user,
+                        name=trip_name,
+                        viewers=view,
+                        editors=edit,
+                        trip_data=trip_data,
+                        id = uuid.uuid4())
 
         session.add(trip)
+        return trip.id
 
 def db_get_trip(authenticated_user, trip_id):
     """
@@ -172,7 +176,6 @@ def db_save_preferences(user, data):
 
 def db_get_preferences(user):
   with session_scope() as session:
-    # Query the preference table using the user's email
     preference = session.query(Preference).filter_by(email=user).one_or_none()
     if preference is not None:
         return preference.preferences_data

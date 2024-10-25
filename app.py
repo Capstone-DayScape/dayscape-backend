@@ -207,17 +207,19 @@ def call_userinfo_endpoint(token):
     return response.json()
 
 # Saves the trip data to the database, optionally modifying trip
-# permissions. Creates a new trip if no trip_id is supplied
+# permissions. Creates a new trip if no trip_id is supplied. Returns
+# trip_id.
 @APP.route("/api/private/save_trip", methods=['POST'])
 @requires_auth
 def save_trip():
     email = request_ctx.user_info.get("email")
-    trip_data = request.json
     trip_id = request.args.get('trip_id', None)
+    trip_name = request.args.get('trip_name', None)
+    trip_data = request.json
     view = request.args.get('view', None)
     edit = request.args.get('edit', None)
-    database.db_save_trip(email, trip_id, trip_data, view, edit)
-    return "saved trip"
+    id = database.db_save_trip(email, trip_id, trip_name, trip_data, view, edit)
+    return str(id)
 
 # Returns the JSON trip structure if the authenticated user has
 # permissions to view the trip.
@@ -235,6 +237,8 @@ def get_trip():
 def get_preferences():
     email = request_ctx.user_info.get("email")
     data = jsonify(database.db_get_preferences(email))
+    print("data")
+    print(data)
     return (data.json)
 
 # saves the JSON body of the request as user preferences in the db
