@@ -26,7 +26,7 @@ auth0_audience = os.environ.get("AUTH0_AUDIENCE", DEV_URL if environment == "dev
 # same pg instance called dayscape-dev
 db_connector = "moonlit-mesh-437320-t8:us-east1:dayscape-dev"
 # Database name
-db_name = "dayscape-dev-db" if environment == "dev" else "dayscape-prod-db"
+db_name = "dayscape-dev" if environment == "dev" else "dayscape-prod"
 
 # Deployments on Cloud Run must change the following variables to
 # match the corresponding frontend deployment URL

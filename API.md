@@ -13,6 +13,8 @@ Frontend URLS:
 - [prod](https://dayscape.netlify.app/) 
 - [dev](https://dayscape-dev.netlify.app/)
 
+Furthermore, good usage documentation is in `src/tests/api_tests.js` in the frontend repository.
+
 ## Authentication
 
 Read the [Auth0 documentation](https://auth0.com/docs/quickstart/backend/python/02-using) first. There is also a more
@@ -48,6 +50,21 @@ These endpoints will be used by anyone **without** an account.
 
 These endpoints will be used by anyone **with** an account.
 
+#### `api/public/preferences_to_types`
+
+Method: **POST**
+Parameters:
+- `input_list`: List of preference strings
+
+Returns a JSON list of [Google Places API
+"Types"](https://developers.google.com/maps/documentation/places/web-service/supported_types). The
+AI could hallucinate, so the output should be checked against a list
+of valid types.
+
+Mostly a demo method to test the LLM and explore deeper API
+integration from the frontend.
+
+
 #### `api/private/maps_key`
 
 Method: **GET**
@@ -58,15 +75,17 @@ Parameters:
 
 Returns the Maps API Key for the frontend to use.
 
-#### `api/private/save_trip?trip_id={id}&view={users}&edit={users}`
+#### `api/private/save_trip?trip_id={id}&trip_name={name}&view={users}&edit={users}`
 
 Method: **POST**
 
 Parameters:
 
-- `trip_id`: (Optional) The unique trip ID. If left empty, a new trip
-  will be created in the database, with the authenticated user as the
-  owner.
+- `trip_id`: (Optional) The unique and valid trip ID. If left empty, a
+  new trip will be created in the database, with the authenticated
+  user as the owner.
+- `trip_name`: (Optional) Trip name. If left empty, the old name will
+  be kept
 - `view`: (Optional) The emails of the users (besides owner) who can
   access the trip to *view*.
 - `edit`: (Optional) The emails of the users (besides owner) who can
@@ -104,7 +123,7 @@ or _viewer_ but not _owner_).
 
 #### `api/private/get_trip?trip_id={id}`
 
-Method: **GET**
+Method: **POST**
 
 Parameters:
 
@@ -113,16 +132,21 @@ Parameters:
 Returns the JSON trip structure if the authenticated user has
 permissions to view the trip.
 
-#### `api/private/preferences_to_types`
+#### `api/private/get_preferences`
+
+Method: **GET**
+
+Parameters: none
+
+Returns the JSON preferences stored in the db for the authenticated user.
+
+#### `api/private/save_preferences`
 
 Method: **POST**
-Parameters:
-- `input_list`: List of preference strings
 
-Returns a JSON list of [Google Places API
-"Types"](https://developers.google.com/maps/documentation/places/web-service/supported_types). The
-AI could hallucinate, so the output should be checked against a list
-of valid types.
+Parameters: none
 
-Mostly a demo method to test the LLM and explore deeper API
-integration from the frontend.
+Updates the JSON preferences stored in the db for the authenticated
+user from the body of the request. The entire json body of the request
+will be stored.
+

@@ -9,6 +9,9 @@ from flask.globals import request_ctx
 from flask_cors import cross_origin, CORS
 from jose import jwt
 
+import database
+import requests
+
 from config import client_origin_url, auth0_audience, auth0_domain, port
 
 if not (client_origin_url and auth0_audience and auth0_domain):
@@ -22,7 +25,6 @@ ALGORITHMS = ["RS256"]
 APP = Flask(__name__)
 
 cors = CORS(APP, resources={r"/api/*": {"origins": client_origin_url}})
-
 
 # Error handler
 class AuthError(Exception):
@@ -112,6 +114,9 @@ def requires_auth(f):
                                      " token."}, 401)
 
             request_ctx.current_user = payload
+            # Also get the user info
+            request_ctx.user_info = call_userinfo_endpoint(token)
+
             return f(*args, **kwargs)
         raise AuthError({"code": "invalid_header",
                          "description": "Unable to find appropriate key"}, 401)
@@ -157,46 +162,16 @@ def maps_api_key():
     key = google_secrets.get_secret("maps_api_key")
     return jsonify(message=key)
 
-# STUB
-# Saves the trip data to the database,
-# optionally modifying trip permissions. Creates a new trip if no
-# trip_id is supplied
-@APP.route("/api/private/save_trip", methods=["POST"])
-@requires_auth
-def save_trip():
-    # If trip_id exists:
-    # - query database for trip
-    # - check that the authenticated user has edit permission or is owner
-    # - check that any permission changes are valid
-    # - save trip to database
-
-    # Otherwise:
-    # - create new trip, set authenticated user as owner
-
-    # If trip to be saved is not valid, return error
-    response = "Trip saved:"
-    return response
-
-# STUB
 # Returns a list of trip IDs and names for
 # trips owned by the authenticated user.
 @APP.route("/api/private/get_owned_trips_list")
 @requires_auth
 def get_owned_trips_list():
-
-    # TODO:
-    # - get Auth0 user
-    # - Query database for owned trips
-
-    # list of trip IDs/names to be displayed on profile page
-    example_trips = {
-        "60f62fed-df59-4ad0-8e73-677e3fda5d9a": "Summer Family Beach Trip",
-        "1336c22f-b80c-4b39-9528-a2bfded82e29": "My mountain trip",
-        "936ba739-db01-45c8-ba46-38ec8acc21f7": "London 2026",
-        "51c28468-0930-4fcf-b8a7-3c2d58e9ac27": "Example trip name",
-    }
-    data = jsonify(example_trips)
-    return jsonify(data.json)
+    email = request_ctx.user_info.get("email")
+    trips = database.db_get_owned_trips(email)
+    objects = [{"uuid": str(uuid), "name": name if name is not None else ""} for uuid, name in trips]
+    data = jsonify(objects)
+    return data.json
 
 # STUB
 # Returns a list of trip IDs and names for trips that have been shared
@@ -204,65 +179,76 @@ def get_owned_trips_list():
 @APP.route("/api/private/get_shared_trips_list")
 @requires_auth
 def get_shared_trips_list():
-    # TODO:
-    # - get Auth0 user
-    # - Query database for trips where user is viewer or editor (not owner)
-
-    # list of trip IDs/names to be displayed on profile page ("Shared with me")
-    example_trips = {
-        "60f62fed-df59-4ad0-8e73-677e3fda5d9a": "Shared Hiking Trip",
-        "1336c22f-b80c-4b39-9528-a2bfded82e29": "Corrie's Wedding Trip",
-        "936ba739-db01-45c8-ba46-38ec8acc21f7": "Night City 2077",
-        "51c28468-0930-4fcf-b8a7-3c2d58e9ac27": "Example shared trip name",
-    }
-    data = jsonify(example_trips)
-    return jsonify(data.json)
-
-    
-# STUB
-# Returns the JSON trip structure if the authenticated user has
-# permissions to view the trip.
-@APP.route("/api/private/get_trip")
-@requires_auth
-def get_trip():
-    # - Query database for trip at the given trip_id
-    # - Check that the authenticated user has permissions to view or edit, or is the owner
-    # - return trip json
-
-    example_trip = {
-        "name": "whatever",
-        "other_field": "whatever"}
-
-    data = jsonify(example_trip)
-    return jsonify(data.json)
+    email = request_ctx.user_info.get("email")
+    trips = database.db_get_shared_trips(email)
+    objects = [{"uuid": str(uuid), "name": name if name is not None else ""} for uuid, name in trips]
+    data = jsonify(objects)
+    return data.json
 
 from llm import match_to_places_api_types
-# This needs authentication. It returns a list of google map "types"
-# based on the preference tag argument (using gpt4o-mini). Could be
-# hardcoded in a map in the frontend but this gives us a way to demo
-# the LLM
-@APP.route("/api/private/preferences_to_types", methods=['POST'])
-@requires_auth
+# Returns a list of google map "types" based on the preference tag
+# argument (using gpt4o-mini). Could be hardcoded in a map in the
+# frontend but this gives us a way to demo the LLM
+@APP.route("/api/public/preferences_to_types", methods=['POST'])
 def preferences_to_types():
     data = request.json
     input_list = data.get('input_list', [])
     matched_list = match_to_places_api_types(input_list)
     return jsonify({'matched_list': matched_list.types})
 
+def call_userinfo_endpoint(token):
+    url = f"https://{auth0_domain}/userinfo"
+    headers = {
+        "Authorization": f"Bearer {token}"
+    }
+    response = requests.get(url, headers=headers)
+    if response.status_code != 200:
+        raise AuthError({"code": "userinfo_request_failed", "description": "Failed to fetch user info"}, response.status_code)
+    return response.json()
 
-# This needs authorization (we probably won't use this)
-@APP.route("/api/private-scoped")
-@cross_origin(headers=["Content-Type", "Authorization"])
+# Saves the trip data to the database, optionally modifying trip
+# permissions. Creates a new trip if no trip_id is supplied. Returns
+# trip_id.
+@APP.route("/api/private/save_trip", methods=['POST'])
 @requires_auth
-def private_scoped():
-    if requires_scope("read:messages"):
-        response = "Hello from a private endpoint! You need to be authenticated and have a scope of read:messages to see this."
-        return jsonify(message=response)
-    raise AuthError({
-        "code": "Unauthorized",
-        "description": "You don't have access to this resource"
-    }, 403)
+def save_trip():
+    email = request_ctx.user_info.get("email")
+    trip_id = request.args.get('trip_id', None)
+    trip_name = request.args.get('trip_name', None)
+    trip_data = request.json
+    view = request.args.get('view', None)
+    edit = request.args.get('edit', None)
+    id = database.db_save_trip(email, trip_id, trip_name, trip_data, view, edit)
+    return str(id)
 
+# Returns the JSON trip structure if the authenticated user has
+# permissions to view the trip.
+@APP.route("/api/private/get_trip", methods=['POST'])
+@requires_auth
+def get_trip():
+    email = request_ctx.user_info.get("email")
+    trip_id = request.args.get('trip_id', None)
+    data = jsonify(database.db_get_trip(email, trip_id))
+    return data.json
+
+# Returns the JSON preferences stored in the db for the authenticated user.
+@APP.route("/api/private/get_preferences")
+@requires_auth
+def get_preferences():
+    email = request_ctx.user_info.get("email")
+    data = jsonify(database.db_get_preferences(email))
+    print("data")
+    print(data)
+    return (data.json)
+
+# saves the JSON body of the request as user preferences in the db
+@APP.route("/api/private/save_preferences", methods=['POST'])
+@requires_auth
+def save_preferences():
+    email = request_ctx.user_info.get("email")
+    data = request.json
+    database.db_save_preferences(email, data)
+    return "saved preferences"
 
 if __name__ == '__main__':
     APP.run(host="0.0.0.0", port=port, debug=True)

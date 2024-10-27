@@ -1,4 +1,16 @@
-CREATE EXTENSION IF NOT EXISTS "uuid-ossp"; -- For generating UUIDs
+-- Create user and set (fake) password
+CREATE USER dayscape WITH PASSWORD 'password';
+
+-- Create dayscape-dev database and switch to it. All commands after
+-- this line will be repeated for 'dayscape-prod' db
+CREATE DATABASE "dayscape-dev";
+\c "dayscape-dev"
+
+-- Example command to connect to this db:
+-- PGPASSWORD=<password> psql -h <IP> -U dayscape -d dayscape-dev
+
+-- For generating UUIDs
+CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
 CREATE TABLE trip (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
@@ -21,12 +33,5 @@ ALTER TABLE preference
 ADD CONSTRAINT check_preferences_data_size
 CHECK (octet_length(preferences_data::text) <= 2048);
 
-GRANT INSERT, UPDATE, DELETE ON trip TO "dayscape-backend@moonlit-mesh-437320-t8.iam";
-GRANT INSERT, UPDATE, DELETE ON preference TO "dayscape-backend@moonlit-mesh-437320-t8.iam";
-
--- The following will fail because of constraint on preference size
--- INSERT INTO preference (email, preferences_data)
--- VALUES (
---     'test@example.com',
---     ('{ "key": "' || repeat('a', 2049) || '"}')::jsonb
--- );
+GRANT SELECT, INSERT, UPDATE, DELETE ON trip TO "dayscape";
+GRANT SELECT, INSERT, UPDATE, DELETE ON preference TO "dayscape";
