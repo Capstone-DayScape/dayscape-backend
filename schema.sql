@@ -33,5 +33,15 @@ ALTER TABLE preference
 ADD CONSTRAINT check_preferences_data_size
 CHECK (octet_length(preferences_data::text) <= 2048);
 
+-- cache to store "userinfo" (most importantly, email address) for
+-- Auth0 tokens
+CREATE TABLE userinfo (
+    token TEXT PRIMARY KEY,
+    data JSON NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+
 GRANT SELECT, INSERT, UPDATE, DELETE ON trip TO "dayscape";
 GRANT SELECT, INSERT, UPDATE, DELETE ON preference TO "dayscape";
+GRANT SELECT, INSERT, UPDATE, DELETE ON userinfo TO "dayscape";
