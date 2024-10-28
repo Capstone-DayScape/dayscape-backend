@@ -209,8 +209,14 @@ def save_trip():
     trip_id = request.args.get('trip_id', None)
     trip_name = request.args.get('trip_name', None)
     trip_data = request.json
+    # lists of emails
     view = request.args.get('view', None)
     edit = request.args.get('edit', None)
+    if view is not None:
+        view = [email.strip() for email in view.split(',')]
+    if edit is not None:
+        edit = [email.strip() for email in edit.split(',')]
+
     id = database.db_save_trip(email, trip_id, trip_name, trip_data, view, edit)
     return str(id)
 

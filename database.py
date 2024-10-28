@@ -75,8 +75,8 @@ def db_get_shared_trips(authenticated_user):
         trips = (
             session.query(Trip.id, Trip.name)
             .filter(
-                (Trip.viewers.contains([authenticated_user])) |
-                (Trip.editors.contains([authenticated_user]))
+                (Trip.viewers.any(authenticated_user)) |
+                (Trip.editors.any(authenticated_user))
             )
             .all())
         return trips
