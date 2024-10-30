@@ -104,7 +104,7 @@ through the _body_ of the request.
 
 **Valid permission changes**: only the _owner_ can add and remove editors and viewers
 
-#### `api/private/get_owned_trips_list` <!--  -->
+#### `api/private/get_owned_trips_list`
 
 Method: **GET**
 

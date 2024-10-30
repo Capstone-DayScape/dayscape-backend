@@ -115,7 +115,7 @@ def requires_auth(f):
 
             request_ctx.current_user = payload
             # Also get the user info
-            request_ctx.user_info = call_userinfo_endpoint(token)
+            request_ctx.user_info = get_userinfo(token)
 
             return f(*args, **kwargs)
         raise AuthError({"code": "invalid_header",
@@ -123,20 +123,23 @@ def requires_auth(f):
 
     return decorated
 
-
-def requires_scope(required_scope):
-    """Determines if the required scope is present in the Access Token
-    Args:
-        required_scope (str): The scope required to access the resource
-    """
-    token = get_token_auth_header()
-    unverified_claims = jwt.get_unverified_claims(token)
-    if unverified_claims.get("scope"):
-        token_scopes = unverified_claims["scope"].split()
-        for token_scope in token_scopes:
-            if token_scope == required_scope:
-                return True
-    return False
+# We can't call the auth0 /userinfo endpoint with each request because
+# of a rate limit (something like 5-10/minute). So we just cache the
+# response in the database and reuse it. We also prune any cached
+# responses older than 10 hours because they're no longer valid.
+def get_userinfo(token):
+    check = database.db_check_userinfo(token)
+    if check: return check
+    url = f"https://{auth0_domain}/userinfo"
+    headers = {
+        "Authorization": f"Bearer {token}"
+    }
+    response = requests.get(url, headers=headers)
+    if response.status_code != 200:
+        raise AuthError({"code": "userinfo_request_failed", "description": "Failed to fetch user info"}, response.status_code)
+    data = response.json()
+    database.db_cache_userinfo(token, data)
+    return data
 
 
 # This doesn't need authentication
@@ -196,16 +199,6 @@ def preferences_to_types():
     matched_list = match_to_places_api_types(input_list)
     return jsonify({'matched_list': matched_list.types})
 
-def call_userinfo_endpoint(token):
-    url = f"https://{auth0_domain}/userinfo"
-    headers = {
-        "Authorization": f"Bearer {token}"
-    }
-    response = requests.get(url, headers=headers)
-    if response.status_code != 200:
-        raise AuthError({"code": "userinfo_request_failed", "description": "Failed to fetch user info"}, response.status_code)
-    return response.json()
-
 # Saves the trip data to the database, optionally modifying trip
 # permissions. Creates a new trip if no trip_id is supplied. Returns
 # trip_id.
@@ -216,8 +209,14 @@ def save_trip():
     trip_id = request.args.get('trip_id', None)
     trip_name = request.args.get('trip_name', None)
     trip_data = request.json
+    # lists of emails
     view = request.args.get('view', None)
     edit = request.args.get('edit', None)
+    if view is not None:
+        view = [email.strip() for email in view.split(',')]
+    if edit is not None:
+        edit = [email.strip() for email in edit.split(',')]
+
     id = database.db_save_trip(email, trip_id, trip_name, trip_data, view, edit)
     return str(id)
 

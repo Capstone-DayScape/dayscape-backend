@@ -1,8 +1,9 @@
 # Direct code to connect to database. Anywhere 'user' is a parameter,
 # it means the user's email as a string.
 
+from datetime import datetime, timedelta, timezone
 from sqlalchemy import create_engine, Column, String, Text, JSON, ARRAY, func
-from sqlalchemy.dialects.postgresql import UUID, ARRAY
+from sqlalchemy.dialects.postgresql import UUID, ARRAY, TIMESTAMP
 from sqlalchemy.orm import sessionmaker, declarative_base
 from contextlib import contextmanager
 import requests
@@ -56,6 +57,12 @@ class Preference(Base):
     email = Column(String(255), nullable=False, primary_key=True)
     preferences_data = Column(JSON)
 
+class UserInfo(Base):
+    __tablename__ = 'userinfo'
+    token = Column(String, primary_key=True)
+    data = Column(JSON, nullable=False)
+    created_at = Column(TIMESTAMP, server_default=func.now())
+
 def db_get_shared_trips(authenticated_user):
     """
     Retrieves a list of trip IDs and names for trips where the authenticated user
@@ -68,8 +75,8 @@ def db_get_shared_trips(authenticated_user):
         trips = (
             session.query(Trip.id, Trip.name)
             .filter(
-                (Trip.viewers.contains([authenticated_user])) |
-                (Trip.editors.contains([authenticated_user]))
+                (Trip.viewers.any(authenticated_user)) |
+                (Trip.editors.any(authenticated_user))
             )
             .all())
         return trips
@@ -179,5 +186,35 @@ def db_get_preferences(user):
     preference = session.query(Preference).filter_by(email=user).one_or_none()
     if preference is not None:
         return preference.preferences_data
+    else:
+        return None
+
+# "userinfo" is simply some json data about the user that we get from
+# the Auth0 API. Since there is a rate limit, we need to cache it
+# after retrieving it for the first time for a token.
+def db_cache_userinfo(token, data):
+    """
+    Adds a new record to the 'userinfo' table.
+
+    Parameters:
+    - token: The authentication token for the user.
+    - data: The JSON data representing the user's information.
+    """
+    with session_scope() as session:
+        user_info = UserInfo(token=token, data=data)
+        session.add(user_info)
+
+# Check for, and return, cached userinfo for a token. Tokens expire
+# after 10 hours, so we also clear old cache data here.
+def db_check_userinfo(token):
+  with session_scope() as session:
+    # Delete records older than 10 hours
+    threshold_time = datetime.now(timezone.utc) - timedelta(hours=10)
+    session.query(UserInfo).filter(UserInfo.created_at < threshold_time).delete()
+
+    # Check for userinfo
+    userinfo = session.query(UserInfo).filter_by(token=token).one_or_none()
+    if userinfo is not None:
+        return userinfo.data
     else:
         return None
