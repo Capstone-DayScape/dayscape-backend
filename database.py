@@ -218,3 +218,91 @@ def db_check_userinfo(token):
         return userinfo.data
     else:
         return None
+
+def db_delete_trip(authenticated_user, trip_id):
+    """
+    Deletes a trip if the authenticated user is the owner.
+
+    Parameters:
+    - authenticated_user: The email of the authenticated user.
+    - trip_id: The ID of the trip to be deleted.
+    """
+    with session_scope() as session:
+        trip = session.query(Trip).filter_by(id=trip_id).one_or_none()
+        if trip:
+            if trip.owner == authenticated_user:
+                session.delete(trip)
+            else:
+                raise PermissionError("Authenticated user does not have permission to delete this trip.")
+        else:
+            raise ValueError("Trip not found.")
+
+
+def db_get_trip_name(authenticated_user, trip_id):
+    """
+    Retrieves the name of the trip if the authenticated user has permission.
+
+    Parameters:
+    - authenticated_user: The email of the authenticated user.
+    - trip_id: The ID of the trip.
+
+    Returns:
+    - The name of the trip.
+    """
+    with session_scope() as session:
+        trip = session.query(Trip).filter_by(id=trip_id).one_or_none()
+        if trip:
+            if (
+                trip.owner == authenticated_user or
+                authenticated_user in trip.viewers or
+                authenticated_user in trip.editors
+            ):
+                return trip.name
+            else:
+                raise PermissionError("Authenticated user does not have permission to view the trip name.")
+        else:
+            raise ValueError("Trip not found.")
+
+
+def db_get_viewers(authenticated_user, trip_id):
+    """
+    Retrieves the list of viewers for a trip if the authenticated user is the owner.
+
+    Parameters:
+    - authenticated_user: The email of the authenticated user.
+    - trip_id: The ID of the trip.
+
+    Returns:
+    - List of viewers' emails.
+    """
+    with session_scope() as session:
+        trip = session.query(Trip).filter_by(id=trip_id).one_or_none()
+        if trip:
+            if trip.owner == authenticated_user:
+                return trip.viewers
+            else:
+                raise PermissionError("Authenticated user does not have permission to view trip viewers.")
+        else:
+            raise ValueError("Trip not found.")
+
+
+def db_get_editors(authenticated_user, trip_id):
+    """
+    Retrieves the list of editors for a trip if the authenticated user is the owner.
+
+    Parameters:
+    - authenticated_user: The email of the authenticated user.
+    - trip_id: The ID of the trip.
+
+    Returns:
+    - List of editors' emails.
+    """
+    with session_scope() as session:
+        trip = session.query(Trip).filter_by(id=trip_id).one_or_none()
+        if trip:
+            if trip.owner == authenticated_user:
+                return trip.editors
+            else:
+                raise PermissionError("Authenticated user does not have permission to view trip editors.")
+        else:
+            raise ValueError("Trip not found.")
