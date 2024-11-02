@@ -134,6 +134,56 @@ Parameters:
 Returns the JSON trip structure if the authenticated user has
 permissions to view the trip.
 
+#### `api/private/delete_trip?trip_id={id}`
+
+Method: **GET**
+
+Parameters:
+
+- `trip_id`: The ID of the trip.
+
+Hard deletes the trip if the authenticated user is the trip owner. Cannot be reversed.
+
+#### `api/private/get_trip_name?trip_id={id}`
+
+Method: **GET**
+
+Parameters:
+
+- `trip_id`: The ID of the trip.
+
+Returns the trip name (as the field "trip_name" of the JSON response).
+
+#### `api/private/get_trip_viewers?trip_id={id}`
+
+Method: **GET**
+
+Parameters:
+
+- `trip_id`: The ID of the trip.
+
+Returns the trip viewers if the authenticated user is the owner. **Viewers and editors cannot see the list of other viewers and editors.**. JSON response format:
+
+```json
+{ viewers: [ 'viewer1@example.com', 'viewer2@example.com' ] }
+```
+
+
+#### `api/private/get_trip_editors?trip_id={id}`
+
+Method: **GET**
+
+Parameters:
+
+- `trip_id`: The ID of the trip.
+
+Returns the trip editors if the authenticated user is the owner. **Viewers and editors cannot see the list of other viewers and editors.**. JSON response format:
+
+```json
+{ editors: [ 'viewer1@example.com', 'viewer2@example.com' ] }
+```
+
+
 #### `api/private/get_preferences`
 
 Method: **GET**
