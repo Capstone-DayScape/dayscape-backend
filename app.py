@@ -242,14 +242,14 @@ def get_preferences():
 
 # saves the JSON body of the request as user preferences in the db
 @APP.route("/api/private/save_preferences", methods=['POST'])
-@requires_auth #skip this line when developing new functions
+@requires_auth
 def save_preferences():
-    email = request_ctx.user_info.get("email") 
+    email = request_ctx.user_info.get("email")
     data = request.json
     database.db_save_preferences(email, data)
     return "saved preferences"
 
-@APP.route("/api/private/delete_trip", methods=['DELETE'])
+@APP.route("/api/private/delete_trip", methods=['GET'])
 @requires_auth
 def delete_trip():
     email = request_ctx.user_info.get("email")

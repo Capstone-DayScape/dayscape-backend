@@ -102,6 +102,8 @@ it's a new trip. Note that **owner** is an immutable field that is set
 by the backend on trip creation. The trip itself should be sent
 through the _body_ of the request.
 
+Returns the trip ID of the trip that was saved.
+
 **Valid permission changes**: only the _owner_ can add and remove editors and viewers
 
 #### `api/private/get_owned_trips_list`
@@ -119,7 +121,7 @@ Parameters: none
 
 Returns a list of trip IDs and names for trips that have been shared
 with the authenticated user (I.E, the authenticated user is _editor_
-or _viewer_ but not _owner_).
+or _viewer_).
 
 #### `api/private/get_trip?trip_id={id}`
 
