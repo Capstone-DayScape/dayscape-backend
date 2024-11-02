@@ -86,16 +86,7 @@ For more info, [this](https://realpython.com/python-testing/) is a good introduc
 
 ## E2E Tests
 
-By default, the E2E tests will run against the static dev endpoint in Google Cloud. You can optionally set the backend url (if you are running against your local deployment or another deployment somewhere):
-
-```
-export BACKEND_URL=http://localhost:5556                # or http://0.0.0.0:5556 if you are testing the container
-```
-
-Run test:
-```
-python -m pytest tests/e2e.py
-```
+E2E tests are now located in the Frontend repository, in file `src/tests/api_tests.js`.
 
 # Container Development and Deployment
 

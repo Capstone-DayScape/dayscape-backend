@@ -249,5 +249,57 @@ def save_preferences():
     database.db_save_preferences(email, data)
     return "saved preferences"
 
+@APP.route("/api/private/delete_trip", methods=['GET'])
+@requires_auth
+def delete_trip():
+    email = request_ctx.user_info.get("email")
+    trip_id = request.args.get('trip_id', None)
+    try:
+        database.db_delete_trip(email, trip_id)
+        return jsonify({"message": "Trip deleted successfully."}), 200
+    except PermissionError as e:
+        return jsonify({"error": str(e)}), 403
+    except ValueError as e:
+        return jsonify({"error": str(e)}), 404
+
+@APP.route("/api/private/get_trip_name", methods=['GET'])
+@requires_auth
+def get_trip_name():
+    email = request_ctx.user_info.get("email")
+    trip_id = request.args.get('trip_id', None)
+    try:
+        trip_name = database.db_get_trip_name(email, trip_id)
+        return jsonify({"trip_name": trip_name}), 200
+    except PermissionError as e:
+        return jsonify({"error": str(e)}), 403
+    except ValueError as e:
+        return jsonify({"error": str(e)}), 404
+
+@APP.route("/api/private/get_trip_viewers", methods=['GET'])
+@requires_auth
+def get_trip_viewers():
+    email = request_ctx.user_info.get("email")
+    trip_id = request.args.get('trip_id', None)
+    try:
+        viewers = database.db_get_viewers(email, trip_id)
+        return jsonify({"viewers": viewers}), 200
+    except PermissionError as e:
+        return jsonify({"error": str(e)}), 403
+    except ValueError as e:
+        return jsonify({"error": str(e)}), 404
+
+@APP.route("/api/private/get_trip_editors", methods=['GET'])
+@requires_auth
+def get_trip_editors():
+    email = request_ctx.user_info.get("email")
+    trip_id = request.args.get('trip_id', None)
+    try:
+        editors = database.db_get_editors(email, trip_id)
+        return jsonify({"editors": editors}), 200
+    except PermissionError as e:
+        return jsonify({"error": str(e)}), 403
+    except ValueError as e:
+        return jsonify({"error": str(e)}), 404
+
 if __name__ == '__main__':
     APP.run(host="0.0.0.0", port=port, debug=True)

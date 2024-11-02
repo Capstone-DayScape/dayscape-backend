@@ -102,6 +102,8 @@ it's a new trip. Note that **owner** is an immutable field that is set
 by the backend on trip creation. The trip itself should be sent
 through the _body_ of the request.
 
+Returns the trip ID of the trip that was saved.
+
 **Valid permission changes**: only the _owner_ can add and remove editors and viewers
 
 #### `api/private/get_owned_trips_list`
@@ -119,7 +121,7 @@ Parameters: none
 
 Returns a list of trip IDs and names for trips that have been shared
 with the authenticated user (I.E, the authenticated user is _editor_
-or _viewer_ but not _owner_).
+or _viewer_).
 
 #### `api/private/get_trip?trip_id={id}`
 
@@ -131,6 +133,56 @@ Parameters:
 
 Returns the JSON trip structure if the authenticated user has
 permissions to view the trip.
+
+#### `api/private/delete_trip?trip_id={id}`
+
+Method: **GET**
+
+Parameters:
+
+- `trip_id`: The ID of the trip.
+
+Hard deletes the trip if the authenticated user is the trip owner. Cannot be reversed.
+
+#### `api/private/get_trip_name?trip_id={id}`
+
+Method: **GET**
+
+Parameters:
+
+- `trip_id`: The ID of the trip.
+
+Returns the trip name (as the field "trip_name" of the JSON response).
+
+#### `api/private/get_trip_viewers?trip_id={id}`
+
+Method: **GET**
+
+Parameters:
+
+- `trip_id`: The ID of the trip.
+
+Returns the trip viewers if the authenticated user is the owner. **Viewers and editors cannot see the list of other viewers and editors.**. JSON response format:
+
+```json
+{ viewers: [ 'viewer1@example.com', 'viewer2@example.com' ] }
+```
+
+
+#### `api/private/get_trip_editors?trip_id={id}`
+
+Method: **GET**
+
+Parameters:
+
+- `trip_id`: The ID of the trip.
+
+Returns the trip editors if the authenticated user is the owner. **Viewers and editors cannot see the list of other viewers and editors.**. JSON response format:
+
+```json
+{ editors: [ 'viewer1@example.com', 'viewer2@example.com' ] }
+```
+
 
 #### `api/private/get_preferences`
 
