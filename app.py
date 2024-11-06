@@ -236,8 +236,6 @@ def get_trip():
 def get_preferences():
     email = request_ctx.user_info.get("email")
     data = jsonify(database.db_get_preferences(email))
-    print("data")
-    print(data)
     return (data.json)
 
 # saves the JSON body of the request as user preferences in the db
@@ -300,6 +298,22 @@ def get_trip_editors():
         return jsonify({"error": str(e)}), 403
     except ValueError as e:
         return jsonify({"error": str(e)}), 404
+
+@APP.route("/api/private/get_is_trip_owner", methods=['GET'])
+@requires_auth
+def get_is_trip_owner():
+    email = request_ctx.user_info.get("email")
+    trip_id = request.args.get('trip_id', None)
+    is_owner = database.db_is_owner(email, trip_id)
+    return jsonify({"is_owner": is_owner}), 200
+
+@APP.route("/api/private/get_can_edit", methods=['GET'])
+@requires_auth
+def get_can_edit():
+    email = request_ctx.user_info.get("email")
+    trip_id = request.args.get('trip_id', None)
+    can_edit = database.db_can_edit(email, trip_id)
+    return jsonify({"can_edit": can_edit}), 200
 
 if __name__ == '__main__':
     APP.run(host="0.0.0.0", port=port, debug=True)

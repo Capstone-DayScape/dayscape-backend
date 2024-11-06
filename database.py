@@ -306,3 +306,35 @@ def db_get_editors(authenticated_user, trip_id):
                 raise PermissionError("Authenticated user does not have permission to view trip editors.")
         else:
             raise ValueError("Trip not found.")
+
+def db_is_owner(authenticated_user, trip_id):
+    """
+    Returns true if the authenticated user is the trip owner.
+
+    Parameters:
+    - authenticated_user: The email of the authenticated user.
+    - trip_id: The ID of the trip.
+    """
+    with session_scope() as session:
+        trip = session.query(Trip).filter_by(id=trip_id).one_or_none()
+        if trip:
+            if trip.owner == authenticated_user:
+              return True;
+            else:
+              return False;
+
+def db_can_edit(authenticated_user, trip_id):
+    """
+    Returns true if the authenticated user has permissions to edit the trip.
+
+    Parameters:
+    - authenticated_user: The email of the authenticated user.
+    - trip_id: The ID of the trip.
+    """
+    with session_scope() as session:
+        trip = session.query(Trip).filter_by(id=trip_id).one_or_none()
+        if trip:
+            if trip.owner == authenticated_user or authenticated_user in trip.editors:
+              return True;
+            else:
+              return False;
