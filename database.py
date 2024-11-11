@@ -118,14 +118,14 @@ def db_save_trip(authenticated_user, trip_id=None,trip_name=None, trip_data=None
             if (trip.owner != authenticated_user and authenticated_user not in trip.editors):
                 raise PermissionError("Authenticated user does not have permission to edit this trip.")
 
-            # Owner can update name, editors, and viewers
+            # Only owner can update editors and viewers
             if trip.owner == authenticated_user:
-              trip.name = trip_name if trip_name is not None else trip.name
               trip.viewers = view if view is not None else trip.viewers
               trip.editors = edit if edit is not None else trip.editors
 
-              # editor and owner can both change trip_data
-              trip.trip_data = trip_data if trip_data is not None else trip.trip_data
+            # editor and owner can both change trip_data and name
+            trip.name = trip_name if trip_name is not None else trip.name
+            trip.trip_data = trip_data if trip_data is not None else trip.trip_data
 
         # frontend cannot choose the trip id
         if not trip and trip_id:
@@ -306,3 +306,35 @@ def db_get_editors(authenticated_user, trip_id):
                 raise PermissionError("Authenticated user does not have permission to view trip editors.")
         else:
             raise ValueError("Trip not found.")
+
+def db_is_owner(authenticated_user, trip_id):
+    """
+    Returns true if the authenticated user is the trip owner.
+
+    Parameters:
+    - authenticated_user: The email of the authenticated user.
+    - trip_id: The ID of the trip.
+    """
+    with session_scope() as session:
+        trip = session.query(Trip).filter_by(id=trip_id).one_or_none()
+        if trip:
+            if trip.owner == authenticated_user:
+              return True;
+            else:
+              return False;
+
+def db_can_edit(authenticated_user, trip_id):
+    """
+    Returns true if the authenticated user has permissions to edit the trip.
+
+    Parameters:
+    - authenticated_user: The email of the authenticated user.
+    - trip_id: The ID of the trip.
+    """
+    with session_scope() as session:
+        trip = session.query(Trip).filter_by(id=trip_id).one_or_none()
+        if trip:
+            if trip.owner == authenticated_user or authenticated_user in trip.editors:
+              return True;
+            else:
+              return False;

@@ -183,6 +183,25 @@ Returns the trip editors if the authenticated user is the owner. **Viewers and e
 { editors: [ 'viewer1@example.com', 'viewer2@example.com' ] }
 ```
 
+#### `api/private/get_is_trip_owner?trip_id={id}`
+
+Method: **GET**
+
+Parameters:
+
+- `trip_id`: The ID of the trip.
+
+Returns `{ is_owner: true }` or `{ is_owner: false }` depending on whether the authenticated user is the owner of the trip.
+
+#### `api/private/get_can_edit?trip_id={id}`
+
+Method: **GET**
+
+Parameters:
+
+- `trip_id`: The ID of the trip.
+
+Returns `{ can_edit: true }` or `{ can_edit: false }` depending on whether the authenticated user has edit permissions for the trip.
 
 #### `api/private/get_preferences`
 
